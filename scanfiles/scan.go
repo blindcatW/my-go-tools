@@ -22,7 +22,8 @@ func walkFunc(path string, info os.FileInfo, err error) error {
 	}
 	sqlStr := "insert into files(path,hash,dis) values (?,?,?)"
 
-	_, err = Mydb.Exec(sqlStr, path, gethash(path), dis)
+	//_, err = Mydb.Exec(sqlStr, path, gethash(path), dis)
+	_, err = Mydb.Exec(sqlStr, path, "", dis)
 	if err != nil {
 		fmt.Println("录入数据库失败：", err)
 		return err
@@ -34,7 +35,7 @@ func walkFunc(path string, info os.FileInfo, err error) error {
 	//}
 	//fmt.Println("保存成功：", theID)
 
-	// time.Sleep(1 * time.Nanosecond)
+	time.Sleep(1 * time.Nanosecond)
 	// if info.IsDir() {
 	// fmt.Println("是个文件夹: ", path)
 	//	return nil
@@ -57,7 +58,7 @@ func NewDB() *sql.DB {
 	DB, _ := sql.Open("mysql", "root:root@tcp(localhost:3306)/myfile?charset=utf8")
 
 	DB.SetConnMaxLifetime(150 * time.Second)
-	DB.SetMaxOpenConns(100)
+	DB.SetMaxOpenConns(300)
 	DB.SetMaxIdleConns(10)
 
 	if err := DB.Ping(); err != nil {
@@ -68,8 +69,11 @@ func NewDB() *sql.DB {
 	return DB
 }
 
+// 大文件取hash值真慢啊
 func gethash(path string) (hash string) {
 	file, _ := os.Open(path)
+	defer file.Close()
+
 	h_ob := sha256.New()
 	_, err := io.Copy(h_ob, file)
 	if err == nil {
@@ -106,12 +110,12 @@ func main() {
 
 	timeStart := time.Now()
 
-	count := 10 // 启动多少个go程
+	count := 50 // 启动多少个go程
 	c := make(chan string, count)
 	e := make(chan bool, count) //用于标识go程退出
 
 	var path string
-	dis = "music"
+	dis = "all"
 
 	fmt.Println("请输入想要遍历的路径：")
 	fmt.Scanf("%s", &path)
