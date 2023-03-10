@@ -7,7 +7,6 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,6 +19,7 @@ func walkFunc(path string, info os.FileInfo, err error) error {
 		fmt.Println("没发现目录或文件：", path) // 目录或文件名太长也会报错
 		return nil
 	}
+	// info.Mode()
 	sqlStr := "insert into files(path,hash,dis) values (?,?,?)"
 
 	//_, err = Mydb.Exec(sqlStr, path, gethash(path), dis)
@@ -110,7 +110,7 @@ func main() {
 
 	timeStart := time.Now()
 
-	count := 50 // 启动多少个go程
+	count := 5 // 启动多少个go程
 	c := make(chan string, count)
 	e := make(chan bool, count) //用于标识go程退出
 
@@ -125,7 +125,7 @@ func main() {
 		go start(i, c, e)
 	}
 
-	files, _ := ioutil.ReadDir(path)
+	files, _ := os.ReadDir(path) // ioutil.ReadDir更改为os.ReadDir
 	// TODO 用map保存未遍历的目录
 	// m := make(map[int]string)
 
